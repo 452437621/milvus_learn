@@ -42,3 +42,60 @@ def test_gitignore_covers_generated_artifacts() -> None:
     text = (ROOT / ".gitignore").read_text(encoding="utf-8")
     for entry in ("htmlcov/", ".coverage", "data/runs/", ".ruff_cache/", ".pytest_cache/"):
         assert entry in text, entry
+
+
+def _split_table_cells(line: str) -> list[str]:
+    """按 GFM 规则切分表格行：行内代码里的 | 也是分隔符，除非转义成 \\|。"""
+    row = line.strip()
+    if row.startswith("|"):
+        row = row[1:]
+    if row.endswith("|") and not row.endswith("\\|"):
+        row = row[:-1]
+
+    cells: list[str] = []
+    buffer = ""
+    escaped = False
+    for char in row:
+        if escaped:
+            buffer += char
+            escaped = False
+        elif char == "\\":
+            buffer += char
+            escaped = True
+        elif char == "|":
+            cells.append(buffer)
+            buffer = ""
+        else:
+            buffer += char
+    cells.append(buffer)
+    return cells
+
+
+def _broken_tables(path: Path) -> list[str]:
+    """返回列数与表头不一致的表格行（跳过代码块）。"""
+    problems: list[str] = []
+    header_cells: int | None = None
+    in_fence = False
+    for number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):
+        stripped = line.strip()
+        if stripped.startswith("```"):
+            in_fence = not in_fence
+            continue
+        if in_fence:
+            continue
+        if stripped.startswith("|") and stripped.endswith("|"):
+            count = len(_split_table_cells(stripped))
+            if header_cells is None:
+                header_cells = count
+            elif count != header_cells:
+                problems.append(f"{path.name}:{number} 表头 {header_cells} 列，实际 {count} 列")
+        else:
+            header_cells = None
+    return problems
+
+
+def test_markdown_tables_have_consistent_columns() -> None:
+    # 表格里行内代码中的 | 会被当成分隔符，必须写成 \|（如余弦公式）。
+    files = [README, *sorted((ROOT / "docs").glob("*.md"))]
+    problems = [problem for path in files for problem in _broken_tables(path)]
+    assert problems == [], "\n".join(problems)
