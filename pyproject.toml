@@ -1,0 +1,59 @@
+[tool.pytest.ini_options]
+minversion = "9.0"
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-ra --strict-markers --strict-config -m 'not slow'"
+timeout = 180
+markers = [
+    "unit: fast tests without Milvus or network",
+    "integration: uses local Milvus Lite",
+    "e2e: runs demo subprocesses or launches Gradio",
+    "slow: excluded by default; run with -m slow",
+]
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::PendingDeprecationWarning",
+    "ignore::ResourceWarning",
+    # gr.Warning 在非请求上下文（直接调用回调）时会发 UserWarning
+    "ignore::UserWarning:gradio.helpers",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+extend-exclude = ["venv", ".venv*", "data", ".ruff_cache", "htmlcov"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B"]
+ignore = ["E501", "B905"]
+
+[tool.ruff.lint.per-file-ignores]
+"demos/*" = ["E402"]
+"app/*" = ["E402"]
+"scripts/*" = ["E402"]
+
+[tool.ruff.format]
+quote-style = "double"
+
+[tool.coverage.run]
+source = ["mlcore", "app"]
+branch = true
+relative_files = true
+
+[tool.coverage.report]
+fail_under = 80
+show_missing = true
+skip_covered = true
+precision = 1
+exclude_also = [
+    "if TYPE_CHECKING:",
+    "if __name__ == .__main__.:",
+    "raise NotImplementedError",
+    "pragma: no cover",
+]
+
+[tool.coverage.html]
+directory = "htmlcov"
+
+[tool.coverage.xml]
+output = "coverage.xml"
