@@ -1,0 +1,28 @@
+# 全部使用本地钩子（language: system），首次运行不需要联网拉取远程仓库。
+# 注意：Windows 上相对路径必须用反斜杠（正斜杠会让 CreateProcess 报 WinError 2），
+# YAML 里写成双反斜杠，shlex 解析后得到单个反斜杠。
+# 安装：venv/Scripts/python.exe -m pre_commit install
+# 手动全量：venv/Scripts/python.exe scripts/dev.py precommit
+repos:
+  - repo: local
+    hooks:
+      - id: ruff-check
+        name: ruff check --fix
+        entry: 'venv\\Scripts\\python.exe -m ruff check --fix'
+        language: system
+        types: [python]
+        pass_filenames: false
+
+      - id: ruff-format
+        name: ruff format
+        entry: 'venv\\Scripts\\python.exe -m ruff format'
+        language: system
+        types: [python]
+        pass_filenames: false
+
+      - id: pytest-unit
+        name: pytest (unit)
+        entry: 'venv\\Scripts\\python.exe -m pytest -m unit -q'
+        language: system
+        pass_filenames: false
+        files: '\.py$'
