@@ -1,0 +1,9 @@
+# Milvus 学习项目依赖
+# 注意：Windows 上 pymilvus[milvus-lite] 的 extra 因 sys_platform 标记不会安装 milvus-lite，
+# 因此这里显式列出 milvus-lite。
+pymilvus==3.0.3
+milvus-lite==3.2.2
+# 中文 BM25 分析器需要 jieba（Milvus Lite 的 jieba analyzer 会动态导入它）
+jieba>=0.42
+gradio>=5.0,<7
+python-dotenv>=1.0,<2
